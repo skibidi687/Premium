@@ -665,7 +665,7 @@ end)
 
 -- Sự kiện nút Submit
 submit.MouseButton1Click:Connect(function()
-    if box.Text == "YOUR_KEY_HERE" then
+    if box.Text == "ZUMARU-UDHANUD" then
         game.StarterGui:SetCore("SendNotification",{
             Title="✅ Đúng Key";
             Text="Đang mở khóa...";
