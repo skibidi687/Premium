@@ -665,7 +665,7 @@ end)
 
 -- Sự kiện nút Submit
 submit.MouseButton1Click:Connect(function()
-    if box.Text == "ZUMARU-JWPDI" then
+    if box.Text == "ZUMARU-HWPDIH" then
         game.StarterGui:SetCore("SendNotification",{
             Title="✅ Đúng Key";
             Text="Đang mở khóa...";
