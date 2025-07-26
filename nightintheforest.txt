@@ -1,0 +1,767 @@
+-- // UI Key System by ChatGPT
+-- // Chạy trong executor (KRNL, Fluxus, Synapse X...)
+-- // Có nút GetKey (copy link), Submit, Exit
+
+-- Tạo ScreenGui
+local sg = Instance.new("ScreenGui")
+sg.Name = "KeySystem"
+sg.ResetOnSpawn = false
+
+-- Tạo Frame
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 300, 0, 200)
+frame.Position = UDim2.new(0.5, -150, 0.5, -100)
+frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+frame.BorderSizePixel = 0
+frame.Parent = sg
+
+-- Tiêu đề
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 40)
+title.BackgroundTransparency = 1
+title.Text = "🔑 Key System"
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 24
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.Parent = frame
+
+-- TextBox nhập key
+local box = Instance.new("TextBox")
+box.Size = UDim2.new(1, -40, 0, 40)
+box.Position = UDim2.new(0, 20, 0, 60)
+box.PlaceholderText = "Nhập key..."
+box.Font = Enum.Font.SourceSans
+box.TextSize = 20
+box.BackgroundColor3 = Color3.fromRGB(60,60,60)
+box.TextColor3 = Color3.fromRGB(255,255,255)
+box.Parent = frame
+
+-- Nút GetKey
+local getKey = Instance.new("TextButton")
+getKey.Size = UDim2.new(0, 80, 0, 30)
+getKey.Position = UDim2.new(0, 20, 1, -40)
+getKey.Text = "GetKey"
+getKey.BackgroundColor3 = Color3.fromRGB(0,170,255)
+getKey.TextColor3 = Color3.fromRGB(255,255,255)
+getKey.Font = Enum.Font.SourceSansBold
+getKey.TextSize = 18
+getKey.Parent = frame
+
+-- Nút Submit
+local submit = Instance.new("TextButton")
+submit.Size = UDim2.new(0, 80, 0, 30)
+submit.Position = UDim2.new(0.5, -40, 1, -40)
+submit.Text = "Submit"
+submit.BackgroundColor3 = Color3.fromRGB(0,200,100)
+submit.TextColor3 = Color3.fromRGB(255,255,255)
+submit.Font = Enum.Font.SourceSansBold
+submit.TextSize = 18
+submit.Parent = frame
+
+-- Nút Exit
+local exit = Instance.new("TextButton")
+exit.Size = UDim2.new(0, 80, 0, 30)
+exit.Position = UDim2.new(1, -100, 1, -40)
+exit.Text = "Exit"
+exit.BackgroundColor3 = Color3.fromRGB(200,50,50)
+exit.TextColor3 = Color3.fromRGB(255,255,255)
+exit.Font = Enum.Font.SourceSansBold
+exit.TextSize = 18
+exit.Parent = frame
+
+-- Thêm ScreenGui vào PlayerGui
+sg.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+
+-- Function để load main hub
+local function loadMainHub()
+    local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+    local Window = Fluent:CreateWindow({
+        Title = "Zumaru Hub",
+        SubTitle = "by vinhth.",
+        TabWidth = 160,
+        Size = UDim2.fromOffset(501, 340),
+        Acrylic = true,
+        Theme = "Dark",
+        MinimizeKey = Enum.KeyCode.LeftControl
+    })
+
+    local Tabs = {
+        Info = Window:AddTab({ Title = "Info", Icon = "info" }),
+        Main = Window:AddTab({ Title = "Main", Icon = "book" }),
+        Bring = Window:AddTab({ Title = "Bring", Icon = "gem" }),
+        Visual = Window:AddTab({ Title = "Visual", Icon = "bookmark" }),
+        Teleport = Window:AddTab({ Title = "Teleport", Icon = "compass" }),
+        Esp = Window:AddTab({ Title = "Esp", Icon = "ghost" }),
+    }
+
+    local function createMobileButton()
+        local ScreenGui = Instance.new("ScreenGui")
+        local ImageButton = Instance.new("ImageButton")
+        local UICorner = Instance.new("UICorner")
+        
+        ScreenGui.Parent = game.CoreGui
+        ImageButton.Parent = ScreenGui
+        ImageButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        ImageButton.Position = UDim2.new(0.12, 0, 0.095, 0)
+        ImageButton.Size = UDim2.new(0, 50, 0, 50)
+        ImageButton.Draggable = true
+        ImageButton.Image = "http://www.roblox.com/asset/?id=131514592839954"
+        
+        UICorner.CornerRadius = UDim.new(0, 10)
+        UICorner.Parent = ImageButton
+        
+        ImageButton.MouseButton1Down:Connect(function()
+            game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.LeftControl, false, game)
+        end)
+    end
+    createMobileButton()
+
+    -- Info Tab
+    Tabs.Info:AddButton({
+        Title = "Discord",
+        Description = "",
+        Callback = function()
+            setclipboard("https://discord.gg/ARBJ4kGPKj")
+        end
+    })
+
+    -- Main Tab
+    Tabs.Main:AddSection("Farm")
+
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+    local Camera = workspace.CurrentCamera
+    local RunService = game:GetService("RunService")
+    local Workspace = game:GetService("Workspace")
+    local VirtualInputManager = game:GetService("VirtualInputManager")
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local Backpack = LocalPlayer:WaitForChild("Backpack")
+    local ToolDamageObject = ReplicatedStorage:WaitForChild("RemoteEvents"):WaitForChild("ToolDamageObject")
+
+    local autoTreeFarmActive = false
+    local autoTreeFarmThread
+    local autoClickEnabled = false
+    local autoClickThread
+
+    local function getAllTrees()
+        local map = workspace:FindFirstChild("Map")
+        if not map then return {} end
+        local landmarks = map:FindFirstChild("Landmarks") or map:FindFirstChild("Foliage")
+        if not landmarks then return {} end
+
+        local trees = {}
+        for _, tree in ipairs(landmarks:GetChildren()) do
+            if tree.Name == "Small Tree" and tree:IsA("Model") and tree.Parent then
+                local trunk = tree:FindFirstChild("Trunk") or tree.PrimaryPart
+                if trunk then
+                    table.insert(trees, { tree = tree, trunk = trunk })
+                end
+            end
+        end
+        return trees
+    end
+
+    local function getAxe()
+        local inv = LocalPlayer:FindFirstChild("Inventory")
+        if not inv then return nil end
+        return inv:FindFirstChild("Old Axe") or inv:FindFirstChildWhichIsA("Tool")
+    end
+
+    function toggleAutoTreeFarm(state)
+        autoTreeFarmActive = state
+
+        if state then
+            autoTreeFarmThread = task.spawn(function()
+                while autoTreeFarmActive do
+                    local trees = getAllTrees()
+                    for _, t in ipairs(trees) do
+                        if not autoTreeFarmActive then break end
+                        if t.tree and t.tree.Parent then
+                            local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+                            local hrp = char:FindFirstChild("HumanoidRootPart")
+                            if hrp and t.trunk then
+                                local offset = {
+                                    Vector3.new(3, 0, 0),
+                                    Vector3.new(-3, 0, 0),
+                                    Vector3.new(0, 0, 3),
+                                    Vector3.new(0, 0, -3)
+                                }
+                                local randomOffset = offset[math.random(1, #offset)]
+                                hrp.CFrame = CFrame.new(t.trunk.Position + randomOffset, t.trunk.Position)
+
+                                task.wait(0.1)
+
+                                local axe = getAxe()
+                                if axe then
+                                    if axe.Parent == Backpack then
+                                        axe.Parent = char
+                                        task.wait(0.15)
+                                    end
+
+                                    while t.tree.Parent and autoTreeFarmActive do
+                                        pcall(function() axe:Activate() end)
+                                        local args = {
+                                            t.tree,
+                                            axe,
+                                            "1_8264699301",
+                                            t.trunk.CFrame
+                                        }
+                                        pcall(function() ToolDamageObject:InvokeServer(unpack(args)) end)
+                                        task.wait(1)
+                                    end
+                                end
+                            end
+                        end
+                        task.wait(0.5)
+                    end
+                    task.wait(1)
+                end
+            end)
+        else
+            autoTreeFarmActive = false
+        end
+    end
+
+    Tabs.Main:AddToggle("AutoTreeFarm", {
+        Title = "Auto farm tree",
+        Default = false,
+        Callback = function(state)
+            toggleAutoTreeFarm(state)
+        end
+    })
+
+    Tabs.Main:AddToggle("AutoClickFarm", {
+        Title = "Auto click farm tree",
+        Default = false,
+        Callback = function(state)
+            autoClickEnabled = state
+            if autoClickEnabled then
+                autoClickThread = task.spawn(function()
+                    while autoClickEnabled do
+                        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+                        task.wait(0.05)
+                        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+                        task.wait(0.05)
+                    end
+                end)
+            else
+                if autoClickThread then
+                    task.cancel(autoClickThread)
+                    autoClickThread = nil
+                end
+            end
+        end
+    })
+
+    Tabs.Main:AddSection("Hitbox")
+
+    local hitboxSize = Vector3.new(15, 15, 15)
+    local hitboxBunny = false
+    local hitboxWolf = false
+    local hitboxCultist = false
+
+    local function updateHitboxForModel(model)
+        local root = model:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+
+        local name = model.Name:lower()
+        local shouldResize =
+            (hitboxWolf and (name:find("wolf") or name:find("alpha"))) or
+            (hitboxBunny and name:find("bunny")) or
+            (hitboxCultist and (name:find("cultist") or name:find("cross")))
+
+        if shouldResize then
+            root.Size = hitboxSize
+            root.Transparency = 0.5
+            root.Color = Color3.fromRGB(241, 196, 15) 
+            root.Material = Enum.Material.ForceField
+            root.CanCollide = false
+        else
+            root.Transparency = 1
+            root.Material = Enum.Material.Plastic
+        end
+    end
+
+    task.spawn(function()
+        while true do
+            for _, model in ipairs(workspace:GetDescendants()) do
+                if model:IsA("Model") and model:FindFirstChild("HumanoidRootPart") then
+                    updateHitboxForModel(model)
+                end
+            end
+            task.wait(1.5)
+        end
+    end)
+
+    Tabs.Main:AddSlider("HitboxSize", {
+        Title = "Hitbox size",
+        Description = "Adjust hitbox size",
+        Default = 10,
+        Min = 2,
+        Max = 30,
+        Rounding = 1,
+        Callback = function(value)
+            hitboxSize = Vector3.new(value, value, value)
+        end
+    })
+
+    Tabs.Main:AddToggle("HitboxWolf", {
+        Title = "Wolf",
+        Default = false,
+        Callback = function(value)
+            hitboxWolf = value
+        end
+    })
+
+    Tabs.Main:AddToggle("HitboxBunny", {
+        Title = "Bunny",
+        Default = false,
+        Callback = function(value)
+            hitboxBunny = value
+        end
+    })
+
+    Tabs.Main:AddToggle("HitboxCultist", {
+        Title = "Cultist",
+        Default = false,
+        Callback = function(value)
+            hitboxCultist = value
+        end
+    })
+
+    -- Bring Tab
+    Tabs.Bring:AddSection("Fuel item")
+
+    local fuelItems = {
+        "Log",
+        "Chair",
+        "Coal",
+        "Fuel Canister",
+        "Oil Barrel",
+        "Biofuel"
+    }
+
+    local selectedFuels = {}
+
+    Tabs.Bring:AddDropdown("FuelDropdown", {
+        Title = "Select fuel item",
+        Values = fuelItems,
+        Multi = true,
+        Default = {},
+        Callback = function(Selected)
+            selectedFuels = Selected or {}
+        end
+    })
+
+    Tabs.Bring:AddButton({
+        Title = "Auto bring fuel item",
+        Description = "Bring selected fuel items to player",
+        Callback = function()
+            local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not root then return end
+
+            for _, item in pairs(Workspace.Items:GetChildren()) do
+                if item:IsA("Model") and table.find(selectedFuels, item.Name) then
+                    local main = item:FindFirstChildWhichIsA("BasePart")
+                    if main then
+                        main.CFrame = root.CFrame * CFrame.new(math.random(-5,5), 0, math.random(-5,5))
+                    end
+                end
+            end
+        end
+    })
+
+    Tabs.Bring:AddSection("Food item")
+
+    local foodItems = {
+        "Carrot",
+        "Berry",
+        "Morsel",
+        "Steak",
+        "Cooked Morsel",
+        "Cooked Steak"
+    }
+
+    local selectedfood = {}
+
+    Tabs.Bring:AddDropdown("FoodDropdown", {
+        Title = "Select food item",
+        Values = foodItems,
+        Multi = true,
+        Default = {},
+        Callback = function(Selectedfood)
+            selectedfood = Selectedfood or {}
+        end
+    })
+
+    Tabs.Bring:AddButton({
+        Title = "Auto bring food item",
+        Description = "Bring selected food items to player",
+        Callback = function()
+            local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not root then return end
+
+            for _, item in pairs(Workspace.Items:GetChildren()) do
+                if item:IsA("Model") and table.find(selectedfood, item.Name) then
+                    local main = item:FindFirstChildWhichIsA("BasePart")
+                    if main then
+                        main.CFrame = root.CFrame * CFrame.new(math.random(-5,5), 0, math.random(-5,5))
+                    end
+                end
+            end
+        end
+    })
+
+    Tabs.Bring:AddSection("Gun item")
+
+    local gunItems = {
+        "Revolver",
+        "Rifle",
+        "Revolver Ammo",
+        "Rifle Ammo",
+        "Leather Body",
+        "Iron Body",
+        "Thorn Body"
+    }
+
+    local selectedgun = {}
+
+    Tabs.Bring:AddDropdown("GunDropdown", {
+        Title = "Select gun item",
+        Values = gunItems,
+        Multi = true,
+        Default = {},
+        Callback = function(Selectedgun)
+            selectedgun = Selectedgun or {}
+        end
+    })
+
+    Tabs.Bring:AddButton({
+        Title = "Auto bring gun item",
+        Description = "Bring selected gun items to player",
+        Callback = function()
+            local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not root then return end
+
+            for _, item in pairs(Workspace.Items:GetChildren()) do
+                if item:IsA("Model") and table.find(selectedgun, item.Name) then
+                    local main = item:FindFirstChildWhichIsA("BasePart")
+                    if main then
+                        main.CFrame = root.CFrame * CFrame.new(math.random(-5,5), 0, math.random(-5,5))
+                    end
+                end
+            end
+        end
+    })
+
+    Tabs.Bring:AddSection("Crafting item")
+
+    local craftingItems = {
+        "Bolt",
+        "Sheet Metal",
+        "Old Radio",
+        "Broken Fan",
+        "Broken Microwave"
+    }
+
+    local selectedcrafting = {}
+
+    Tabs.Bring:AddDropdown("CraftingDropdown", {
+        Title = "Select crafting item",
+        Values = craftingItems,
+        Multi = true,
+        Default = {},
+        Callback = function(Selectedcrafting)
+            selectedcrafting = Selectedcrafting or {}
+        end
+    })
+
+    Tabs.Bring:AddButton({
+        Title = "Auto bring crafting item",
+        Description = "Bring selected crafting items to player",
+        Callback = function()
+            local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not root then return end
+
+            for _, item in pairs(Workspace.Items:GetChildren()) do
+                if item:IsA("Model") and table.find(selectedcrafting, item.Name) then
+                    local main = item:FindFirstChildWhichIsA("BasePart")
+                    if main then
+                        main.CFrame = root.CFrame * CFrame.new(math.random(-5,5), 0, math.random(-5,5))
+                    end
+                end
+            end
+        end
+    })
+
+    Tabs.Bring:AddSection("Healing item")
+
+    local healingItems = {
+        "Bandage",
+        "MedKit"
+    }
+
+    local selectedhealing = {}
+
+    Tabs.Bring:AddDropdown("HealingDropdown", {
+        Title = "Select healing item",
+        Values = healingItems,
+        Multi = true,
+        Default = {},
+        Callback = function(Selectedhealing)
+            selectedhealing = Selectedhealing or {}
+        end
+    })
+
+    Tabs.Bring:AddButton({
+        Title = "Auto bring healing item",
+        Description = "Bring selected healing items to player",
+        Callback = function()
+            local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not root then return end
+
+            for _, item in pairs(Workspace.Items:GetChildren()) do
+                if item:IsA("Model") and table.find(selectedhealing, item.Name) then
+                    local main = item:FindFirstChildWhichIsA("BasePart")
+                    if main then
+                        main.CFrame = root.CFrame * CFrame.new(math.random(-5,5), 0, math.random(-5,5))
+                    end
+                end
+            end
+        end
+    })
+
+    -- Visual Tab
+-- Visual Tab - FIXED VERSION
+local Http = game:GetService("HttpService")
+local TPS = game:GetService("TeleportService")
+
+Tabs.Visual:AddButton({
+    Title = "Skip day [server hop]",
+    Description = "Server hop to skip day",
+    Callback = function()
+        local Api = "https://games.roblox.com/v1/games/"
+        local _place = game.PlaceId
+        local _servers = Api.._place.."/servers/Public?sortOrder=Asc&limit=100"
+        function ListServers(cursor)
+            local Raw = game:HttpGet(_servers .. ((cursor and "&cursor="..cursor) or ""))
+            return Http:JSONDecode(Raw)
+        end
+        local Server, Next; repeat
+            local Servers = ListServers(Next)
+            Server = Servers.data[1]
+            Next = Servers.nextPageCursor
+        until Server
+        TPS:TeleportToPlaceInstance(_place,Server.id,game.Players.LocalPlayer)
+    end
+}) 
+
+local IJ = false
+Tabs.Visual:AddToggle("InfJump", {
+    Title = "Inf jump",
+    Default = false, 
+    Callback = function(state)
+        IJ = state
+        game:GetService("UserInputService").JumpRequest:Connect(function()
+            if IJ then
+                game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass('Humanoid'):ChangeState("Jumping")
+            end
+        end)
+    end
+})
+
+local NoclipEnabled = false 
+
+local function noclip()
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    for _, part in pairs(character:GetDescendants()) do
+        if part:IsA("BasePart") and part.CanCollide == true then
+            part.CanCollide = false
+        end
+    end
+end
+
+RunService.Stepped:Connect(function()
+    if NoclipEnabled then
+        noclip()
+    end
+end)
+
+Tabs.Visual:AddToggle("Noclip", {
+    Title = "No clip",
+    Default = false,
+    Callback = function(state)
+        NoclipEnabled = state
+    end
+})
+
+Tabs.Visual:AddSlider("SpeedSlider", {
+    Title = "Speed value",
+    Default = 16,
+    Min = 5,
+    Max = 100,
+    Rounding = 1,
+    Callback = function(value)
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value 
+    end
+})
+
+    -- ESP Tab
+    Tabs.Esp:AddSection("Player")
+
+    local ESP = loadstring(game:HttpGet("https://kiriot22.com/releases/ESP.lua"))()
+    ESP:Toggle(true)
+    ESP.Players = false
+    ESP.Tracers = false
+    ESP.Boxes = false
+    ESP.Names = false
+    ESP.TeamColor = false
+
+    Tabs.Esp:AddToggle("EspEnabled", {
+        Title = "Esp enabled",
+        Default = false,
+        Callback = function(Value)
+            ESP.Players = Value
+        end
+    })
+
+    Tabs.Esp:AddToggle("EspName", {
+        Title = "Esp name",
+        Default = false,
+        Callback = function(Value)
+            ESP.Names = Value
+        end
+    })
+
+    Tabs.Esp:AddToggle("EspBox", {
+        Title = "Esp box",
+        Default = false,
+        Callback = function(Value)
+            ESP.Boxes = Value
+        end
+    })
+
+    Tabs.Esp:AddToggle("EspTracer", {
+        Title = "Esp tracer",
+        Default = false,
+        Callback = function(Value)
+            ESP.Tracers = Value
+        end
+    })
+
+    -- Teleport Tab
+    Tabs.Teleport:AddButton({
+        Title = "Teleport to camp",
+        Description = "Teleport to camp location",
+        Callback = function()
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                char.HumanoidRootPart.CFrame = CFrame.new(
+                    13.287363052368164, 3.999999761581421, 0.36212217807769775,
+                    0.6022269129753113, -2.275036159460342e-08, 0.7983249425888062,
+                    6.430457055728311e-09, 1, 2.364672191390582e-08,
+                    -0.7983249425888062, -9.1070981866892e-09, 0.6022269129753113
+                )
+            end
+        end
+    })
+
+    Tabs.Teleport:AddButton({
+        Title = "Teleport to trader",
+        Description = "Teleport to trader location",
+        Callback = function()
+            local pos = Vector3.new(-37.08, 3.98, -16.33)
+            local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+            local hrp = character:WaitForChild("HumanoidRootPart")
+            hrp.CFrame = CFrame.new(pos)
+        end
+    })
+
+    Tabs.Teleport:AddButton({
+        Title = "Teleport random chest",
+        Description = "Teleport to a random chest",
+        Callback = function()
+            local chests = {}
+            for _, obj in pairs(Workspace:WaitForChild("Items"):GetChildren()) do
+                if obj.Name:match("^Item Chest2?$") then
+                    table.insert(chests, obj)
+                end
+            end
+            if #chests > 0 and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local chosen = chests[math.random(1, #chests)]
+                local root = LocalPlayer.Character.HumanoidRootPart
+                local targetPos = chosen:FindFirstChildWhichIsA("BasePart") or chosen:FindFirstChild("ChestLid")
+                
+                if targetPos then
+                    local offset = Vector3.new(math.random(-3, 3), 5, math.random(-3, 3)) 
+                    root.CFrame = CFrame.new(targetPos.Position + offset)
+                end
+            end
+        end
+    })
+
+Tabs.Teleport:AddButton({
+    Title = "Teleport ufo",
+    Callback = function()
+local ufo = workspace:FindFirstChild("Structures") and workspace.Structures:FindFirstChild("Hologram Emitter UFO")
+local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+if ufo and hrp then
+    local targetCFrame = ufo:GetPivot() + Vector3.new(0, 5, 0) 
+    hrp.CFrame = targetCFrame
+else
+end
+    end
+})
+
+    Tabs.Teleport:AddButton({
+        Title = "Teleport main game",
+        Description = "Teleport to main game",
+        Callback = function()
+            local TeleportService = game:GetService('TeleportService')
+            GameId = 79546208627805
+            TeleportService:Teleport(GameId, game.Players.LocalPlayer)
+        end
+    })
+end
+
+-- Sự kiện nút GetKey
+getKey.MouseButton1Click:Connect(function()
+    if setclipboard then
+        setclipboard("https://discord.gg/ARBJ4kGPKj")
+        game.StarterGui:SetCore("SendNotification",{
+            Title="✅ GetKey";
+            Text="Đã sao chép link Discord!";
+            Duration=3;
+        })
+    else
+        warn("Executor không hỗ trợ setclipboard.")
+    end
+end)
+
+-- Sự kiện nút Submit
+submit.MouseButton1Click:Connect(function()
+    if box.Text == "ZUMARU-HEIDPW" then
+        game.StarterGui:SetCore("SendNotification",{
+            Title="✅ Đúng Key";
+            Text="Đang mở khóa...";
+            Duration=3;
+        })
+        sg:Destroy() -- tắt UI Key System
+        
+        -- Load main hub chỉ khi key đúng
+        loadMainHub()
+    else
+        game.StarterGui:SetCore("SendNotification",{
+            Title="❌ Sai Key";
+            Text="Hãy thử lại!";
+            Duration=3;
+        })
+    end
+end)
+
+-- Sự kiện nút Exit
+exit.MouseButton1Click:Connect(function()
+    sg:Destroy()
+end)
