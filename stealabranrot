@@ -22,7 +22,7 @@ local Confirmed = false
 
 
 local Window = WindUI:CreateWindow({
-    Title = "Zumaru Hub",
+    Title = "Bacon Hub",
     Icon = "rbxassetid://",
     Author = "by vinhth.",
     Folder = "",
@@ -1299,3 +1299,4 @@ Tabs.Misc:Button({
 		(game:GetService("TeleportService")):TeleportToPlaceInstance(game.PlaceId, _G.JobId);
 	end
 })
+
