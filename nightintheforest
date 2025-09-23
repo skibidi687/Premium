@@ -1119,7 +1119,7 @@ end)
 
 -- Sự kiện nút Submit
 submit.MouseButton1Click:Connect(function()
-    if box.Text == "ZUMARU-GODOFY" then
+    if box.Text == "BACON-GODOFY" then
         game.StarterGui:SetCore("SendNotification",{
             Title="✅ Đúng Key";
             Text="Đang mở khóa...";
@@ -1142,4 +1142,5 @@ end)
 exit.MouseButton1Click:Connect(function()
     sg:Destroy()
 end)
+
 
